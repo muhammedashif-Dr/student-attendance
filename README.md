@@ -32,7 +32,13 @@ A polished desktop attendance management application built with Python, MySQL, a
    ```
 4. Start the app:
    ```bash
+   # Desktop app
    python app.py
+
+# Or run the Flask web app (suitable for Render deployment)
+```
+python web_app.py
+```
    ```
 
 ## Notes
@@ -50,3 +56,15 @@ You can override these values with environment variables:
 - `DB_NAME`
 - `ADMIN_USERNAME`
 - `ADMIN_PASSWORD`
+To deploy on Render (or similar):
+
+1. Ensure `requirements.txt` contains `gunicorn` and `Flask` (already included).
+2. Push the repo to GitHub.
+3. Create a new Web service on Render, connect your GitHub repo, and set the start command to:
+
+```
+gunicorn web_app:app
+```
+
+4. Add environment variables for your MySQL connection and `FLASK_SECRET`.
+

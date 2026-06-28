@@ -1,0 +1,58 @@
+{% extends 'layout.html' %}
+{% block content %}
+<div class="d-flex justify-content-between mb-3">
+  <h3>Admin Dashboard</h3>
+  <div>
+    <a class="btn btn-sm btn-secondary" href="{{ url_for('reports') }}">Reports</a>
+    <a class="btn btn-sm btn-outline-primary" href="{{ url_for('export_csv') }}">Export CSV</a>
+  </div>
+</div>
+
+<div class="card mb-3">
+  <div class="card-body">
+    <h5>Register / Update Student</h5>
+    <form id="studentForm">
+      <div class="row">
+        <div class="col-md-3 mb-2"><input name="student_id" placeholder="Student ID" class="form-control" required></div>
+        <div class="col-md-3 mb-2"><input name="name" placeholder="Full Name" class="form-control" required></div>
+        <div class="col-md-2 mb-2"><input name="department" placeholder="Department" class="form-control"></div>
+        <div class="col-md-2 mb-2"><input name="class_name" placeholder="Class" class="form-control"></div>
+        <div class="col-md-2 mb-2"><input name="phone" placeholder="Phone" class="form-control"></div>
+      </div>
+      <div class="row mt-2">
+        <div class="col-md-3"><input name="password" placeholder="Password (optional)" class="form-control"></div>
+        <div class="col-md-9 text-end"><button class="btn btn-primary">Save Student</button></div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-body">
+    <div class="d-flex mb-2">
+      <input id="searchBox" class="form-control me-2" placeholder="Search students">
+      <button id="searchBtn" class="btn btn-outline-secondary">Search</button>
+    </div>
+    <div class="table-responsive">
+      <table class="table table-sm" id="studentsTable">
+        <thead><tr><th>ID</th><th>Name</th><th>Department</th><th>Class</th><th>Phone</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+async function loadStudents(q=''){
+  const res = await fetch('/api/students?q='+encodeURIComponent(q));
+  const data = await res.json();
+  const tbody = document.querySelector('#studentsTable tbody'); tbody.innerHTML='';
+  data.forEach(s=>{ const tr=document.createElement('tr'); tr.innerHTML=`<td>${s.student_id}</td><td>${s.name}</td><td>${s.department||''}</td><td>${s.class_name||''}</td><td>${s.phone||''}</td>`; tr.onclick=()=>populateForm(s); tbody.appendChild(tr); });
+}
+function populateForm(s){ const f=document.getElementById('studentForm'); f.student_id.value=s.student_id; f.name.value=s.name; f.department.value=s.department||''; f.class_name.value=s.class_name||''; f.phone.value=s.phone||''; }
+document.getElementById('searchBtn').addEventListener('click', ()=>loadStudents(document.getElementById('searchBox').value));
+document.getElementById('studentForm').addEventListener('submit', async (e)=>{ e.preventDefault(); const form=new FormData(e.target); const res=await fetch('/api/student',{method:'POST', body:form}); const j=await res.json(); if(j.ok){ alert('Saved'); e.target.reset(); loadStudents(); } else alert(j.error||'Error'); });
+loadStudents();
+</script>
+
+{% endblock %}

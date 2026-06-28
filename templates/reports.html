@@ -1,0 +1,18 @@
+{% extends 'layout.html' %}
+{% block content %}
+<h3>Attendance Reports</h3>
+<div class="table-responsive mt-3">
+  <table class="table table-sm">
+    <thead><tr><th>Student ID</th><th>Name</th><th>Total</th><th>Present</th><th>Absent</th><th>%</th></tr></thead>
+    <tbody>
+      {% for sid, name, total, present, absent in rows %}
+        {% set total = total or 0 %}
+        {% set present = present or 0 %}
+        {% set absent = absent or 0 %}
+        {% set pct = (present / total * 100) if total else 0 %}
+        <tr><td>{{ sid }}</td><td>{{ name }}</td><td>{{ total }}</td><td>{{ present }}</td><td>{{ absent }}</td><td>{{ '%.2f'|format(pct) }}%</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}
