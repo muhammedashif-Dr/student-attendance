@@ -4,68 +4,57 @@ import csv
 import io
 import hashlib
 from datetime import datetime
-import mysql.connector
-from mysql.connector import Error
+import sqlite3
 
 app = Flask(__name__)
 app.secret_key = os.getenv('FLASK_SECRET', 'change-me')
 
-DB_CONFIG = {
-    "host": os.getenv("DB_HOST", "localhost"),
-    "port": int(os.getenv("DB_PORT", "3306")),
-    "user": os.getenv("DB_USER", "root"),
-    "password": os.getenv("DB_PASSWORD", ""),
-    "database": os.getenv("DB_NAME", "student_attendance"),
-}
+# Using SQLite for portability in deploys
+DB_PATH = os.getenv('DB_PATH', os.getenv('DB_NAME', 'student_attendance.db'))
 
 ADMIN_USERNAME = os.getenv("ADMIN_USERNAME", "admin")
 ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "admin123")
 
 
-def connect(use_database: bool = True):
-    cfg = dict(DB_CONFIG)
-    if not use_database:
-        cfg.pop('database', None)
-    return mysql.connector.connect(**cfg, autocommit=True)
+def connect():
+    conn = sqlite3.connect(DB_PATH, detect_types=sqlite3.PARSE_DECLTYPES)
+    conn.row_factory = sqlite3.Row
+    conn.execute('PRAGMA foreign_keys = ON')
+    return conn
 
 
 def initialize_database():
     try:
-        conn = connect(use_database=False)
-        cursor = conn.cursor()
-        cursor.execute(f"CREATE DATABASE IF NOT EXISTS `{DB_CONFIG['database']}`")
-        cursor.close()
-        conn.close()
-
-        conn = connect(use_database=True)
+        conn = connect()
         cursor = conn.cursor()
         cursor.execute(
             """
             CREATE TABLE IF NOT EXISTS students (
-                student_id VARCHAR(20) PRIMARY KEY,
-                name VARCHAR(100) NOT NULL,
-                department VARCHAR(100),
-                class_name VARCHAR(50),
-                phone VARCHAR(20),
-                password VARCHAR(100) DEFAULT ''
+                student_id TEXT PRIMARY KEY,
+                name TEXT NOT NULL,
+                department TEXT,
+                class_name TEXT,
+                phone TEXT,
+                password TEXT DEFAULT ''
             )
             """
         )
         cursor.execute(
             """
             CREATE TABLE IF NOT EXISTS attendance (
-                id INT AUTO_INCREMENT PRIMARY KEY,
-                student_id VARCHAR(20) NOT NULL,
-                attendance_date DATE NOT NULL,
-                status VARCHAR(10) NOT NULL,
-                UNIQUE KEY uq_student_date (student_id, attendance_date),
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                student_id TEXT NOT NULL,
+                attendance_date TEXT NOT NULL,
+                status TEXT NOT NULL,
+                UNIQUE(student_id, attendance_date),
                 FOREIGN KEY (student_id) REFERENCES students(student_id) ON DELETE CASCADE
             )
             """
         )
+        conn.commit()
         cursor.close()
         conn.close()
-    except Error as e:
+    except sqlite3.Error as e:
         print('Database init error:', e)
 
 
@@ -90,8 +79,8 @@ def login():
 
         try:
             conn = connect()
-            cursor = conn.cursor(dictionary=True)
-            cursor.execute('SELECT student_id, name, password FROM students WHERE student_id = %s', (username,))
+            cursor = conn.cursor()
+            cursor.execute('SELECT student_id, name, password FROM students WHERE student_id = ?', (username,))
             student = cursor.fetchone()
             cursor.close()
             conn.close()
@@ -101,7 +90,7 @@ def login():
                 session['name'] = student['name']
                 return redirect(url_for('student_dashboard'))
             flash('Invalid credentials', 'danger')
-        except Error as e:
+        except sqlite3.Error as e:
             flash(str(e), 'danger')
     return render_template('login.html')
 
@@ -127,16 +116,16 @@ def student_dashboard():
     try:
         conn = connect()
         cursor = conn.cursor()
-        cursor.execute('SELECT COUNT(*), SUM(CASE WHEN status = "Present" THEN 1 ELSE 0 END) FROM attendance WHERE student_id = %s', (student_id,))
+        cursor.execute('SELECT COUNT(*), SUM(CASE WHEN status = "Present" THEN 1 ELSE 0 END) FROM attendance WHERE student_id = ?', (student_id,))
         totals = cursor.fetchone()
-        cursor.execute('SELECT attendance_date, status FROM attendance WHERE student_id = %s ORDER BY attendance_date DESC LIMIT 100', (student_id,))
+        cursor.execute('SELECT attendance_date, status FROM attendance WHERE student_id = ? ORDER BY attendance_date DESC LIMIT 100', (student_id,))
         rows = cursor.fetchall()
         cursor.close()
         conn.close()
         total_days = totals[0] or 0
         present = totals[1] or 0
         percentage = round((present / total_days) * 100, 2) if total_days else 0
-    except Error as e:
+    except sqlite3.Error as e:
         flash(str(e), 'danger')
         rows = []
         total_days = present = percentage = 0
@@ -153,15 +142,15 @@ def api_students():
         cursor = conn.cursor()
         if term:
             pat = f"%{term}%"
-            cursor.execute('''SELECT student_id, name, department, class_name, phone FROM students WHERE student_id LIKE %s OR name LIKE %s OR department LIKE %s OR class_name LIKE %s OR phone LIKE %s ORDER BY name''', (pat, pat, pat, pat, pat))
+            cursor.execute('''SELECT student_id, name, department, class_name, phone FROM students WHERE student_id LIKE ? OR name LIKE ? OR department LIKE ? OR class_name LIKE ? OR phone LIKE ? ORDER BY name''', (pat, pat, pat, pat, pat))
         else:
             cursor.execute('SELECT student_id, name, department, class_name, phone FROM students ORDER BY name')
         rows = cursor.fetchall()
         cursor.close()
         conn.close()
-        data = [dict(student_id=r[0], name=r[1], department=r[2], class_name=r[3], phone=r[4]) for r in rows]
+        data = [dict(student_id=r['student_id'], name=r['name'], department=r['department'], class_name=r['class_name'], phone=r['phone']) for r in rows]
         return jsonify(data)
-    except Error as e:
+    except sqlite3.Error as e:
         return jsonify({'error': str(e)}), 500
 
 
@@ -182,11 +171,12 @@ def api_save_student():
         conn = connect()
         cursor = conn.cursor()
         hashed = hash_password(pwd)
-        cursor.execute('''INSERT INTO students (student_id, name, department, class_name, phone, password) VALUES (%s,%s,%s,%s,%s,%s) ON DUPLICATE KEY UPDATE name=VALUES(name), department=VALUES(department), class_name=VALUES(class_name), phone=VALUES(phone), password=VALUES(password)''', (student_id, name, dept, cls, phone, hashed))
+        cursor.execute('''INSERT INTO students (student_id, name, department, class_name, phone, password) VALUES (?,?,?,?,?,?) ON CONFLICT(student_id) DO UPDATE SET name=excluded.name, department=excluded.department, class_name=excluded.class_name, phone=excluded.phone, password=excluded.password''', (student_id, name, dept, cls, phone, hashed))
+        conn.commit()
         cursor.close()
         conn.close()
         return jsonify({'ok': True})
-    except Error as e:
+    except sqlite3.Error as e:
         return jsonify({'error': str(e)}), 500
 
 
@@ -203,11 +193,12 @@ def api_mark_attendance():
     try:
         conn = connect()
         cursor = conn.cursor()
-        cursor.execute('''INSERT INTO attendance (student_id, attendance_date, status) VALUES (%s,%s,%s) ON DUPLICATE KEY UPDATE status=VALUES(status)''', (student_id, date, status))
+        cursor.execute('''INSERT INTO attendance (student_id, attendance_date, status) VALUES (?,?,?) ON CONFLICT(student_id, attendance_date) DO UPDATE SET status=excluded.status''', (student_id, date, status))
+        conn.commit()
         cursor.close()
         conn.close()
         return jsonify({'ok': True})
-    except Error as e:
+    except sqlite3.Error as e:
         return jsonify({'error': str(e)}), 500
 
 
@@ -222,7 +213,7 @@ def reports():
         rows = cursor.fetchall()
         cursor.close()
         conn.close()
-    except Error as e:
+    except sqlite3.Error as e:
         flash(str(e), 'danger')
         rows = []
     return render_template('reports.html', rows=rows)
@@ -250,7 +241,7 @@ def export_csv():
             writer.writerow([student_id, name, total_days, present_days, absent_days, f"{percentage}%"])
         output.seek(0)
         return send_file(io.BytesIO(output.getvalue().encode('utf-8')), mimetype='text/csv', as_attachment=True, download_name='attendance_report.csv')
-    except Error as e:
+    except sqlite3.Error as e:
         flash(str(e), 'danger')
         return redirect(url_for('reports'))
 

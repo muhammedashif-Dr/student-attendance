@@ -1,6 +1,6 @@
 # Student Attendance Management System
 
-A polished desktop attendance management application built with Python, MySQL, and Tkinter.
+A polished attendance management application built with Python, SQLite, and Flask/Tkinter (desktop).
 
 ## New Features
 - Modern login screen with Administrator and Student roles
@@ -16,30 +16,25 @@ A polished desktop attendance management application built with Python, MySQL, a
 
 ## Requirements
 - Python 3.9+
-- MySQL Server
 - `pip install -r requirements.txt`
 
 ## Default Login
 - Administrator: `admin` / `admin123`
 - Student: use your student ID and a password set during registration
 
-## Database Setup
-1. Start your MySQL server.
-2. Create a database user and update the connection settings in `app.py` if needed.
-3. Run the SQL script:
-   ```bash
-   mysql -u <username> -p < schema.sql
-   ```
-4. Start the app:
-   ```bash
-   # Desktop app
-   python app.py
+## Database
+This project now uses a local SQLite database for easy deployment. The database file defaults to `student_attendance.db`.
+
+No manual SQL setup is required — the app will create the database and tables on first run.
+
+Start the app:
+```bash
+# Desktop app
+python app_desktop.py
 
 # Or run the Flask web app (suitable for Render deployment)
-```
 python web_app.py
 ```
-   ```
 
 ## Notes
 The app uses the following MySQL database configuration by default:
