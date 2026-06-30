@@ -16,7 +16,6 @@ ADMIN_USERNAME = os.getenv("ADMIN_USERNAME", "admin")
 ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "admin123")
 
 # Ensure database and tables exist when the app module is imported (useful for Gunicorn/Render)
-initialize_database()
 
 
 def connect():
