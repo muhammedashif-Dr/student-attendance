@@ -68,3 +68,16 @@ gunicorn web_app:app
 
 4. Add environment variables for your MySQL connection and `FLASK_SECRET`.
 
+Notes about entrypoints
+- Desktop app: the desktop Tkinter application was renamed to `app_desktop.py` to avoid being imported by web servers. Run locally with:
+
+```
+python app_desktop.py
+```
+
+- Web app (Render): ensure your Render start command or service uses the following command so it runs the Flask web app and does not import any Tkinter UI:
+
+```
+gunicorn web_app:app
+```
+

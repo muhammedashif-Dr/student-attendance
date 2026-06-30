@@ -1,0 +1,47 @@
+:root{
+  --bg:#f8fafc;
+  --card:#ffffff;
+  --primary:#4f46e5;
+  --muted:#6b7280;
+  --text:#0f172a;
+  --radius:12px;
+}
+
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial}
+
+.navbar-brand{font-weight:700;color:var(--primary)!important}
+
+.container-main{max-width:1200px;margin:0 auto}
+
+.card{border-radius:var(--radius);box-shadow:0 6px 18px rgba(16,24,40,0.04);border:0}
+
+/* Responsive dashboard grid */
+.dashboard-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem}
+.dashboard-grid .card{padding:1rem}
+
+@media (max-width:991px){
+  .dashboard-grid{grid-template-columns:repeat(2,1fr)}
+}
+@media (max-width:575px){
+  .dashboard-grid{grid-template-columns:1fr}
+}
+
+.table-responsive{border-radius:8px;overflow:hidden}
+
+.form-control, .btn{border-radius:8px}
+
+/* Small utility tweaks */
+.kv{font-size:.85rem;color:var(--muted)}
+.header-row{display:flex;justify-content:space-between;align-items:center;gap:1rem}
+
+/* Make tables easier to scan on mobile */
+.table thead{background:#f1f5f9}
+.table td, .table th{vertical-align:middle}
+
+/* Forms spacing */
+.form-row{display:flex;flex-wrap:wrap;gap:.5rem}
+.form-row .col{flex:1 1 200px}
+
+/* Buttons */
+.btn-primary{background:var(--primary);border:0}
+.btn-outline-primary{border-color:rgba(79,70,229,.12)}
