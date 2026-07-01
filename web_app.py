@@ -1,21 +1,16 @@
 from flask import Flask, render_template, request, redirect, url_for, session, send_file, jsonify, flash
-import os
 import csv
-import io
 import hashlib
-from datetime import datetime
+import io
+import os
 import sqlite3
 
 app = Flask(__name__)
 app.secret_key = os.getenv('FLASK_SECRET', 'change-me')
 
-# Using SQLite for portability in deploys
 DB_PATH = os.getenv('DB_PATH', os.getenv('DB_NAME', 'student_attendance.db'))
-
-ADMIN_USERNAME = os.getenv("ADMIN_USERNAME", "admin")
-ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "admin123")
-
-# Ensure database and tables exist when the app module is imported (useful for Gunicorn/Render)
+ADMIN_USERNAME = os.getenv('ADMIN_USERNAME', 'admin')
+ADMIN_PASSWORD = os.getenv('ADMIN_PASSWORD', 'admin123')
 
 
 def connect():
@@ -73,7 +68,6 @@ def login():
             flash('Provide username and password', 'warning')
             return redirect(url_for('login'))
 
-        # admin
         if username == ADMIN_USERNAME and password == ADMIN_PASSWORD:
             session['role'] = 'admin'
             session['name'] = 'Administrator'
@@ -143,7 +137,7 @@ def api_students():
         conn = connect()
         cursor = conn.cursor()
         if term:
-            pat = f"%{term}%"
+            pat = f'%{term}%'
             cursor.execute('''SELECT student_id, name, department, class_name, phone FROM students WHERE student_id LIKE ? OR name LIKE ? OR department LIKE ? OR class_name LIKE ? OR phone LIKE ? ORDER BY name''', (pat, pat, pat, pat, pat))
         else:
             cursor.execute('SELECT student_id, name, department, class_name, phone FROM students ORDER BY name')
@@ -234,13 +228,13 @@ def export_csv():
         conn.close()
         output = io.StringIO()
         writer = csv.writer(output)
-        writer.writerow(["Student ID", "Name", "Total Days", "Present", "Absent", "Attendance %"])
+        writer.writerow(['Student ID', 'Name', 'Total Days', 'Present', 'Absent', 'Attendance %'])
         for student_id, name, total_days, present_days, absent_days in rows:
             total_days = total_days or 0
             present_days = present_days or 0
             absent_days = absent_days or 0
             percentage = round((present_days / total_days) * 100, 2) if total_days else 0.0
-            writer.writerow([student_id, name, total_days, present_days, absent_days, f"{percentage}%"])
+            writer.writerow([student_id, name, total_days, present_days, absent_days, f'{percentage}%'])
         output.seek(0)
         return send_file(io.BytesIO(output.getvalue().encode('utf-8')), mimetype='text/csv', as_attachment=True, download_name='attendance_report.csv')
     except sqlite3.Error as e:
@@ -248,6 +242,8 @@ def export_csv():
         return redirect(url_for('reports'))
 
 
+initialize_database()
+
+
 if __name__ == '__main__':
-    initialize_database()
     app.run(host='0.0.0.0', port=int(os.getenv('PORT', 5000)), debug=True)

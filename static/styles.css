@@ -5,6 +5,8 @@
   --muted:#6b7280;
   --text:#0f172a;
   --radius:12px;
+  --success:#16a34a;
+  --danger:#dc2626;
 }
 
 html,body{height:100%;background:var(--bg);color:var(--text);font-family:Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial}
@@ -37,6 +39,11 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:Inter, 
 /* Make tables easier to scan on mobile */
 .table thead{background:#f1f5f9}
 .table td, .table th{vertical-align:middle}
+.attendance-table tbody tr:hover{background:#f8fafc}
+.attendance-stat-card h2{font-size:1.7rem;font-weight:700;margin-top:.25rem}
+.status-badge{display:inline-block;padding:.28rem .6rem;border-radius:999px;font-size:.8rem;font-weight:600}
+.status-present{background:rgba(22,163,74,.12);color:var(--success)}
+.status-absent{background:rgba(220,38,38,.12);color:var(--danger)}
 
 /* Forms spacing */
 .form-row{display:flex;flex-wrap:wrap;gap:.5rem}

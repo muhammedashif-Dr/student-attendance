@@ -1,21 +1,21 @@
 {% extends 'layout.html' %}
 {% block content %}
-<h3>Your Attendance</h3>
-<div class="row mb-3">
-  <div class="col-md-4">
-    <div class="card p-3">
+<h3 class="mb-3">Your Attendance</h3>
+<div class="row mb-4">
+  <div class="col-md-4 mb-3">
+    <div class="card p-3 attendance-stat-card">
       <h5>Total Days</h5>
       <h2>{{ total_days }}</h2>
     </div>
   </div>
-  <div class="col-md-4">
-    <div class="card p-3">
+  <div class="col-md-4 mb-3">
+    <div class="card p-3 attendance-stat-card">
       <h5>Present</h5>
       <h2>{{ present }}</h2>
     </div>
   </div>
-  <div class="col-md-4">
-    <div class="card p-3">
+  <div class="col-md-4 mb-3">
+    <div class="card p-3 attendance-stat-card">
       <h5>Attendance %</h5>
       <h2>{{ percentage }}%</h2>
     </div>
@@ -23,14 +23,36 @@
 </div>
 <div class="card">
   <div class="card-body">
-    <h5>History</h5>
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h5 class="mb-0">History</h5>
+    </div>
     <div class="table-responsive">
-      <table class="table table-sm">
-        <thead><tr><th>Date</th><th>Status</th></tr></thead>
+      <table class="table table-sm attendance-table">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Status</th>
+          </tr>
+        </thead>
         <tbody>
-          {% for date, status in rows %}
-            <tr><td>{{ date }}</td><td>{{ status }}</td></tr>
-          {% endfor %}
+          {% if rows %}
+            {% for date, status in rows %}
+              <tr>
+                <td>{{ date }}</td>
+                <td>
+                  {% if status == 'Present' %}
+                    <span class="status-badge status-present">Present</span>
+                  {% else %}
+                    <span class="status-badge status-absent">Absent</span>
+                  {% endif %}
+                </td>
+              </tr>
+            {% endfor %}
+          {% else %}
+            <tr>
+              <td colspan="2" class="text-center text-muted py-4">No attendance history yet.</td>
+            </tr>
+          {% endif %}
         </tbody>
       </table>
     </div>

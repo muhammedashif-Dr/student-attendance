@@ -1,6 +1,6 @@
 # Student Attendance Management System
 
-A polished attendance management application built with Python, SQLite, and Flask/Tkinter (desktop).
+A polished attendance management application built with Python, Flask, and SQLite.
 
 ## New Features
 - Modern login screen with Administrator and Student roles
@@ -23,9 +23,9 @@ A polished attendance management application built with Python, SQLite, and Flas
 - Student: use your student ID and a password set during registration
 
 ## Database
-This project now uses a local SQLite database for easy deployment. The database file defaults to `student_attendance.db`.
+This project uses SQLite for data storage. The app will create the database file and tables on first run.
 
-No manual SQL setup is required — the app will create the database and tables on first run.
+The default database file is `student_attendance.db`.
 
 Start the app:
 ```bash
