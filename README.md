@@ -19,7 +19,7 @@ A polished attendance management application built with Python, Flask, and SQLit
 - `pip install -r requirements.txt`
 
 ## Default Login
-- Administrator: `admin` / `admin123`
+- Administrator: `MUHAMMEDASHIF` / `Ashif@0112`
 - Student: use your student ID and a password set during registration
 
 ## Database

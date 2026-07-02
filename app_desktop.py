@@ -17,8 +17,8 @@ DB_CONFIG = {
     "database": os.getenv("DB_NAME", "student_attendance"),
 }
 
-ADMIN_USERNAME = os.getenv("ADMIN_USERNAME", "admin")
-ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "admin123")
+ADMIN_USERNAME = os.getenv("ADMIN_USERNAME", "MUHAMMEDASHIF")
+ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "Ashif@0112")
 
 BG = "#f3f7ff"
 CARD = "#ffffff"
