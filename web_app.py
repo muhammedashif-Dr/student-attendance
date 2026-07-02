@@ -112,20 +112,66 @@ def student_dashboard():
     try:
         conn = connect()
         cursor = conn.cursor()
-        cursor.execute('SELECT COUNT(*), SUM(CASE WHEN status = "Present" THEN 1 ELSE 0 END) FROM attendance WHERE student_id = ?', (student_id,))
+        
+        # Get count of Present, Late, Absent
+        cursor.execute('''SELECT COUNT(*), 
+                          SUM(CASE WHEN status = "Present" THEN 1 ELSE 0 END) AS present_days,
+                          SUM(CASE WHEN status = "Late" THEN 1 ELSE 0 END) AS late_days,
+                          SUM(CASE WHEN status = "Absent" THEN 1 ELSE 0 END) AS absent_days
+                          FROM attendance WHERE student_id = ?''', (student_id,))
         totals = cursor.fetchone()
-        cursor.execute('SELECT attendance_date, status FROM attendance WHERE student_id = ? ORDER BY attendance_date DESC LIMIT 100', (student_id,))
-        rows = cursor.fetchall()
+        
         cursor.close()
         conn.close()
+        
         total_days = totals[0] or 0
         present = totals[1] or 0
-        percentage = round((present / total_days) * 100, 2) if total_days else 0
+        late = totals[2] or 0
+        absent = totals[3] or 0
+        
+        # Apply 3 lates = 1 absent
+        eff_present = present + late - (late // 3)
+        eff_absent = absent + (late // 3)
+        
+        percentage = round((eff_present / total_days) * 100, 2) if total_days else 0
+        
+        # Pre-process rows to display dynamic 3rd late in history
+        processed_rows = []
+        conn = connect()
+        cursor = conn.cursor()
+        cursor.execute('SELECT attendance_date, status FROM attendance WHERE student_id = ? ORDER BY attendance_date ASC', (student_id,))
+        all_rows = cursor.fetchall()
+        cursor.close()
+        conn.close()
+        
+        late_count = 0
+        chrono_processed = []
+        for r in all_rows:
+            date_str = r['attendance_date']
+            status = r['status']
+            disp_status = status
+            if status == 'Late':
+                late_count += 1
+                if late_count % 3 == 0:
+                    disp_status = 'Absent (3rd Late)'
+            chrono_processed.append((date_str, disp_status))
+            
+        processed_rows = list(reversed(chrono_processed))[:100]
+        
     except sqlite3.Error as e:
         flash(str(e), 'danger')
-        rows = []
-        total_days = present = percentage = 0
-    return render_template('student_dashboard.html', rows=rows, total_days=total_days, present=present, percentage=percentage)
+        processed_rows = []
+        total_days = present = late = absent = eff_present = eff_absent = percentage = 0
+        
+    return render_template('student_dashboard.html', 
+                           rows=processed_rows, 
+                           total_days=total_days, 
+                           present=present, 
+                           late=late,
+                           absent=absent,
+                           eff_present=eff_present,
+                           eff_absent=eff_absent,
+                           percentage=percentage)
 
 
 @app.route('/api/students', methods=['GET', 'POST'])
@@ -176,6 +222,61 @@ def api_save_student():
         return jsonify({'error': str(e)}), 500
 
 
+def get_late_count(student_id, date=None):
+    try:
+        conn = connect()
+        cursor = conn.cursor()
+        if date:
+            cursor.execute('SELECT COUNT(*) FROM attendance WHERE student_id = ? AND status = "Late" AND attendance_date != ?', (student_id, date))
+        else:
+            cursor.execute('SELECT COUNT(*) FROM attendance WHERE student_id = ? AND status = "Late"', (student_id,))
+        count = cursor.fetchone()[0]
+        cursor.close()
+        conn.close()
+        return count
+    except sqlite3.Error:
+        return 0
+
+
+@app.route('/api/attendance-by-date', methods=['GET'])
+def api_attendance_by_date():
+    if session.get('role') != 'admin':
+        return jsonify({'error': 'unauthorized'}), 401
+    date = request.args.get('date', '').strip()
+    if not date:
+        return jsonify({'error': 'date is required'}), 400
+    try:
+        conn = connect()
+        cursor = conn.cursor()
+        cursor.execute('SELECT student_id, name, department, class_name FROM students ORDER BY name')
+        students = cursor.fetchall()
+        
+        cursor.execute('SELECT student_id, status FROM attendance WHERE attendance_date = ?', (date,))
+        attendance_map = {r['student_id']: r['status'] for r in cursor.fetchall()}
+        
+        cursor.close()
+        conn.close()
+        
+        data = []
+        for s in students:
+            sid = s['student_id']
+            prev_lates = get_late_count(sid, date=date)
+            status = attendance_map.get(sid, 'Present')
+            
+            data.append({
+                'student_id': sid,
+                'name': s['name'],
+                'department': s['department'],
+                'class_name': s['class_name'],
+                'status': status,
+                'prev_lates': prev_lates
+            })
+            
+        return jsonify(data)
+    except sqlite3.Error as e:
+        return jsonify({'error': str(e)}), 500
+
+
 @app.route('/api/attendance', methods=['POST'])
 def api_mark_attendance():
     if session.get('role') != 'admin':
@@ -205,14 +306,37 @@ def reports():
     try:
         conn = connect()
         cursor = conn.cursor()
-        cursor.execute('''SELECT s.student_id, s.name, COUNT(a.id) AS total_days, SUM(CASE WHEN a.status = 'Present' THEN 1 ELSE 0 END) AS present_days, SUM(CASE WHEN a.status = 'Absent' THEN 1 ELSE 0 END) AS absent_days FROM students s LEFT JOIN attendance a ON s.student_id = a.student_id GROUP BY s.student_id, s.name ORDER BY s.name''')
+        cursor.execute('''SELECT s.student_id, s.name, COUNT(a.id) AS total_days, 
+                          SUM(CASE WHEN a.status = 'Present' THEN 1 ELSE 0 END) AS present_days, 
+                          SUM(CASE WHEN a.status = 'Late' THEN 1 ELSE 0 END) AS late_days,
+                          SUM(CASE WHEN a.status = 'Absent' THEN 1 ELSE 0 END) AS absent_days 
+                          FROM students s 
+                          LEFT JOIN attendance a ON s.student_id = a.student_id 
+                          GROUP BY s.student_id, s.name 
+                          ORDER BY s.name''')
         rows = cursor.fetchall()
         cursor.close()
         conn.close()
+        
+        processed_rows = []
+        for r in rows:
+            sid = r['student_id']
+            name = r['name']
+            total = r['total_days'] or 0
+            present = r['present_days'] or 0
+            late = r['late_days'] or 0
+            absent = r['absent_days'] or 0
+            
+            eff_present = present + late - (late // 3)
+            eff_absent = absent + (late // 3)
+            percentage = round((eff_present / total) * 100, 2) if total else 0.0
+            
+            processed_rows.append((sid, name, total, present, late, absent, eff_present, eff_absent, percentage))
+            
     except sqlite3.Error as e:
         flash(str(e), 'danger')
-        rows = []
-    return render_template('reports.html', rows=rows)
+        processed_rows = []
+    return render_template('reports.html', rows=processed_rows)
 
 
 @app.route('/export_csv')
@@ -222,19 +346,32 @@ def export_csv():
     try:
         conn = connect()
         cursor = conn.cursor()
-        cursor.execute('''SELECT s.student_id, s.name, COUNT(a.id) AS total_days, SUM(CASE WHEN a.status = 'Present' THEN 1 ELSE 0 END) AS present_days, SUM(CASE WHEN a.status = 'Absent' THEN 1 ELSE 0 END) AS absent_days FROM students s LEFT JOIN attendance a ON s.student_id = a.student_id GROUP BY s.student_id, s.name ORDER BY s.name''')
+        cursor.execute('''SELECT s.student_id, s.name, COUNT(a.id) AS total_days, 
+                          SUM(CASE WHEN a.status = 'Present' THEN 1 ELSE 0 END) AS present_days, 
+                          SUM(CASE WHEN a.status = 'Late' THEN 1 ELSE 0 END) AS late_days,
+                          SUM(CASE WHEN a.status = 'Absent' THEN 1 ELSE 0 END) AS absent_days 
+                          FROM students s 
+                          LEFT JOIN attendance a ON s.student_id = a.student_id 
+                          GROUP BY s.student_id, s.name 
+                          ORDER BY s.name''')
         rows = cursor.fetchall()
         cursor.close()
         conn.close()
         output = io.StringIO()
         writer = csv.writer(output)
-        writer.writerow(['Student ID', 'Name', 'Total Days', 'Present', 'Absent', 'Attendance %'])
-        for student_id, name, total_days, present_days, absent_days in rows:
-            total_days = total_days or 0
-            present_days = present_days or 0
-            absent_days = absent_days or 0
-            percentage = round((present_days / total_days) * 100, 2) if total_days else 0.0
-            writer.writerow([student_id, name, total_days, present_days, absent_days, f'{percentage}%'])
+        writer.writerow(['Student ID', 'Name', 'Total Days', 'Present', 'Late', 'Absent', 'Effective Present', 'Effective Absent', 'Attendance %'])
+        for r in rows:
+            sid = r['student_id']
+            name = r['name']
+            total = r['total_days'] or 0
+            present = r['present_days'] or 0
+            late = r['late_days'] or 0
+            absent = r['absent_days'] or 0
+            
+            eff_present = present + late - (late // 3)
+            eff_absent = absent + (late // 3)
+            percentage = round((eff_present / total) * 100, 2) if total else 0.0
+            writer.writerow([sid, name, total, present, late, absent, eff_present, eff_absent, f'{percentage}%'])
         output.seek(0)
         return send_file(io.BytesIO(output.getvalue().encode('utf-8')), mimetype='text/csv', as_attachment=True, download_name='attendance_report.csv')
     except sqlite3.Error as e:

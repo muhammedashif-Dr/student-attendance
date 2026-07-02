@@ -2,22 +2,40 @@
 {% block content %}
 <h3 class="mb-3">Your Attendance</h3>
 <div class="row mb-4">
-  <div class="col-md-4 mb-3">
-    <div class="card p-3 attendance-stat-card">
-      <h5>Total Days</h5>
-      <h2>{{ total_days }}</h2>
+  <div class="col-md-2 col-sm-4 mb-3">
+    <div class="card p-3 attendance-stat-card text-center">
+      <h6 class="text-muted">Total Days</h6>
+      <h3>{{ total_days }}</h3>
     </div>
   </div>
-  <div class="col-md-4 mb-3">
-    <div class="card p-3 attendance-stat-card">
-      <h5>Present</h5>
-      <h2>{{ present }}</h2>
+  <div class="col-md-2 col-sm-4 mb-3">
+    <div class="card p-3 attendance-stat-card text-center">
+      <h6 class="text-muted">Present</h6>
+      <h3>{{ present }}</h3>
     </div>
   </div>
-  <div class="col-md-4 mb-3">
-    <div class="card p-3 attendance-stat-card">
-      <h5>Attendance %</h5>
-      <h2>{{ percentage }}%</h2>
+  <div class="col-md-2 col-sm-4 mb-3">
+    <div class="card p-3 attendance-stat-card text-center">
+      <h6 class="text-muted">Late</h6>
+      <h3>{{ late }}</h3>
+    </div>
+  </div>
+  <div class="col-md-2 col-sm-4 mb-3">
+    <div class="card p-3 attendance-stat-card text-center">
+      <h6 class="text-muted">Absent</h6>
+      <h3>{{ absent }}</h3>
+    </div>
+  </div>
+  <div class="col-md-2 col-sm-4 mb-3">
+    <div class="card p-3 attendance-stat-card text-center border-primary">
+      <h6 class="text-primary">Attended (Eff.)</h6>
+      <h3>{{ eff_present }}</h3>
+    </div>
+  </div>
+  <div class="col-md-2 col-sm-4 mb-3">
+    <div class="card p-3 attendance-stat-card text-center">
+      <h6 class="text-muted">Attendance %</h6>
+      <h3 class="{{ 'text-danger' if percentage < 75.0 else 'text-success' }}">{{ percentage }}%</h3>
     </div>
   </div>
 </div>
@@ -27,8 +45,8 @@
       <h5 class="mb-0">History</h5>
     </div>
     <div class="table-responsive">
-      <table class="table table-sm attendance-table">
-        <thead>
+      <table class="table table-sm attendance-table text-center align-middle">
+        <thead class="table-light">
           <tr>
             <th>Date</th>
             <th>Status</th>
@@ -41,9 +59,15 @@
                 <td>{{ date }}</td>
                 <td>
                   {% if status == 'Present' %}
-                    <span class="status-badge status-present">Present</span>
+                    <span class="status-badge status-present">✅ Present</span>
+                  {% elif status == 'Late' %}
+                    <span class="status-badge status-late">⚠️ Late</span>
+                  {% elif status == 'Absent' %}
+                    <span class="status-badge status-absent">❌ Absent</span>
+                  {% elif status == 'Absent (3rd Late)' %}
+                    <span class="status-badge status-absent">❌ Absent (3rd Late)</span>
                   {% else %}
-                    <span class="status-badge status-absent">Absent</span>
+                    <span class="status-badge bg-secondary text-white">{{ status }}</span>
                   {% endif %}
                 </td>
               </tr>

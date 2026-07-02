@@ -52,3 +52,9 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:Inter, 
 /* Buttons */
 .btn-primary{background:var(--primary);border:0}
 .btn-outline-primary{border-color:rgba(79,70,229,.12)}
+
+/* Attendance Grid Highlight Colors */
+.table-success-light { background-color: rgba(22, 163, 74, 0.06) !important; }
+.table-warning-light { background-color: rgba(217, 119, 6, 0.06) !important; }
+.table-danger-light { background-color: rgba(220, 38, 38, 0.06) !important; }
+.status-late { background: rgba(217, 119, 6, 0.12); color: #d97706; }

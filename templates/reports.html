@@ -1,16 +1,41 @@
 {% extends 'layout.html' %}
 {% block content %}
-<h3>Attendance Reports</h3>
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h3>Attendance Reports</h3>
+  <a class="btn btn-sm btn-outline-primary" href="{{ url_for('export_csv') }}">Export CSV</a>
+</div>
 <div class="table-responsive mt-3">
-  <table class="table table-sm">
-    <thead><tr><th>Student ID</th><th>Name</th><th>Total</th><th>Present</th><th>Absent</th><th>%</th></tr></thead>
+  <table class="table table-sm table-bordered table-striped align-middle text-center mb-0">
+    <thead class="table-light">
+      <tr>
+        <th>Student ID</th>
+        <th>Name</th>
+        <th>Total Days</th>
+        <th>Present</th>
+        <th>Late</th>
+        <th>Absent</th>
+        <th>Effective Attended</th>
+        <th>Effective Absent</th>
+        <th>Attendance %</th>
+      </tr>
+    </thead>
     <tbody>
-      {% for sid, name, total, present, absent in rows %}
-        {% set total = total or 0 %}
-        {% set present = present or 0 %}
-        {% set absent = absent or 0 %}
-        {% set pct = (present / total * 100) if total else 0 %}
-        <tr><td>{{ sid }}</td><td>{{ name }}</td><td>{{ total }}</td><td>{{ present }}</td><td>{{ absent }}</td><td>{{ '%.2f'|format(pct) }}%</td></tr>
+      {% for sid, name, total, present, late, absent, eff_present, eff_absent, percentage in rows %}
+        <tr class="{{ 'table-danger-light' if percentage < 75.0 and total > 0 else 'table-success-light' if total > 0 else '' }}">
+          <td><strong>{{ sid }}</strong></td>
+          <td class="text-start">{{ name }}</td>
+          <td>{{ total }}</td>
+          <td>{{ present }}</td>
+          <td><span class="badge status-late">{{ late }}</span></td>
+          <td>{{ absent }}</td>
+          <td><strong>{{ eff_present }}</strong></td>
+          <td><strong>{{ eff_absent }}</strong></td>
+          <td>
+            <span class="badge {{ 'bg-danger' if percentage < 75.0 else 'bg-success' }}">
+              {{ '%.2f'|format(percentage) }}%
+            </span>
+          </td>
+        </tr>
       {% endfor %}
     </tbody>
   </table>
