@@ -9,8 +9,8 @@ app = Flask(__name__)
 app.secret_key = os.getenv('FLASK_SECRET', 'change-me')
 
 DB_PATH = os.getenv('DB_PATH', os.getenv('DB_NAME', 'student_attendance.db'))
-ADMIN_USERNAME = os.getenv('ADMIN_USERNAME', 'admin')
-ADMIN_PASSWORD = os.getenv('ADMIN_PASSWORD', 'admin123')
+ADMIN_USERNAME = os.getenv('ADMIN_USERNAME', 'MUHAMMEDASHIF')
+ADMIN_PASSWORD = os.getenv('ADMIN_PASSWORD', 'Ashif@0112')
 
 
 def connect():
