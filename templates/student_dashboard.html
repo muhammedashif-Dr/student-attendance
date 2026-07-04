@@ -1,85 +1,104 @@
 {% extends 'layout.html' %}
 {% block content %}
-<h3 class="mb-3">Your Attendance</h3>
+
+<div class="dashboard-header">
+  <div class="dashboard-title-area">
+    <h1>Your Attendance Dashboard</h1>
+  </div>
+</div>
+
+<div class="welcome-banner">
+  <div class="user-profile-summary">
+    <div class="user-avatar-placeholder">
+      <i class="bi bi-mortarboard-fill" style="font-size: 1.3rem; color: #258bf5;"></i>
+    </div>
+    <div class="welcome-text">
+      <span class="welcome-subtitle">Logged in as,</span>
+      <span class="welcome-title">{{ session.name }}</span>
+    </div>
+  </div>
+</div>
+
+<!-- Stats Row -->
 <div class="row mb-4">
   <div class="col-md-2 col-sm-4 mb-3">
-    <div class="card p-3 attendance-stat-card text-center">
-      <h6 class="text-muted">Total Days</h6>
-      <h3>{{ total_days }}</h3>
+    <div class="card-premium text-center d-flex flex-column align-items-center justify-content-center" style="height: 120px;">
+      <span class="text-muted" style="font-size: 0.8rem; font-weight: 600;">Total Days</span>
+      <h3 style="font-size: 1.8rem; font-weight: 700; margin-top: 4px;">{{ total_days }}</h3>
     </div>
   </div>
   <div class="col-md-2 col-sm-4 mb-3">
-    <div class="card p-3 attendance-stat-card text-center">
-      <h6 class="text-muted">Present</h6>
-      <h3>{{ present }}</h3>
+    <div class="card-premium text-center d-flex flex-column align-items-center justify-content-center" style="height: 120px;">
+      <span class="text-muted" style="font-size: 0.8rem; font-weight: 600;">Present</span>
+      <h3 style="font-size: 1.8rem; font-weight: 700; margin-top: 4px; color: var(--success);">{{ present }}</h3>
     </div>
   </div>
   <div class="col-md-2 col-sm-4 mb-3">
-    <div class="card p-3 attendance-stat-card text-center">
-      <h6 class="text-muted">Late</h6>
-      <h3>{{ late }}</h3>
+    <div class="card-premium text-center d-flex flex-column align-items-center justify-content-center" style="height: 120px;">
+      <span class="text-muted" style="font-size: 0.8rem; font-weight: 600;">Late</span>
+      <h3 style="font-size: 1.8rem; font-weight: 700; margin-top: 4px; color: var(--warning);">{{ late }}</h3>
     </div>
   </div>
   <div class="col-md-2 col-sm-4 mb-3">
-    <div class="card p-3 attendance-stat-card text-center">
-      <h6 class="text-muted">Absent</h6>
-      <h3>{{ absent }}</h3>
+    <div class="card-premium text-center d-flex flex-column align-items-center justify-content-center" style="height: 120px;">
+      <span class="text-muted" style="font-size: 0.8rem; font-weight: 600;">Absent</span>
+      <h3 style="font-size: 1.8rem; font-weight: 700; margin-top: 4px; color: var(--danger);">{{ absent }}</h3>
     </div>
   </div>
   <div class="col-md-2 col-sm-4 mb-3">
-    <div class="card p-3 attendance-stat-card text-center border-primary">
-      <h6 class="text-primary">Attended (Eff.)</h6>
-      <h3>{{ eff_present }}</h3>
+    <div class="card-premium text-center d-flex flex-column align-items-center justify-content-center" style="height: 120px; border-color: rgba(37, 139, 245, 0.4);">
+      <span class="text-primary" style="font-size: 0.8rem; font-weight: 600;">Effective Attended</span>
+      <h3 style="font-size: 1.8rem; font-weight: 700; margin-top: 4px; color: var(--primary);">{{ eff_present }}</h3>
     </div>
   </div>
   <div class="col-md-2 col-sm-4 mb-3">
-    <div class="card p-3 attendance-stat-card text-center">
-      <h6 class="text-muted">Attendance %</h6>
-      <h3 class="{{ 'text-danger' if percentage < 75.0 else 'text-success' }}">{{ percentage }}%</h3>
+    <div class="card-premium text-center d-flex flex-column align-items-center justify-content-center" style="height: 120px;">
+      <span class="text-muted" style="font-size: 0.8rem; font-weight: 600;">Attendance %</span>
+      <h3 class="{% if percentage < 75.0 %}text-danger{% else %}text-success{% endif %}" style="font-size: 1.8rem; font-weight: 700; margin-top: 4px;">{{ percentage }}%</h3>
     </div>
   </div>
 </div>
-<div class="card">
-  <div class="card-body">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-      <h5 class="mb-0">History</h5>
-    </div>
-    <div class="table-responsive">
-      <table class="table table-sm attendance-table text-center align-middle">
-        <thead class="table-light">
-          <tr>
-            <th>Date</th>
-            <th>Status</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% if rows %}
-            {% for date, status in rows %}
-              <tr>
-                <td>{{ date }}</td>
-                <td>
-                  {% if status == 'Present' %}
-                    <span class="status-badge status-present">✅ Present</span>
-                  {% elif status == 'Late' %}
-                    <span class="status-badge status-late">⚠️ Late</span>
-                  {% elif status == 'Absent' %}
-                    <span class="status-badge status-absent">❌ Absent</span>
-                  {% elif status == 'Absent (3rd Late)' %}
-                    <span class="status-badge status-absent">❌ Absent (3rd Late)</span>
-                  {% else %}
-                    <span class="status-badge bg-secondary text-white">{{ status }}</span>
-                  {% endif %}
-                </td>
-              </tr>
-            {% endfor %}
-          {% else %}
+
+<div class="card-premium-action">
+  <h5>Attendance History Log</h5>
+  <p class="text-muted mb-3" style="font-size: 0.85rem;">This log shows details of your attendance marks sorted chronologically. Note: 3 late marks count as 1 absence.</p>
+  
+  <div class="table-premium-container">
+    <table class="table-premium text-center">
+      <thead>
+        <tr>
+          <th class="text-center">Date</th>
+          <th class="text-center">Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% if rows %}
+          {% for date, status in rows %}
             <tr>
-              <td colspan="2" class="text-center text-muted py-4">No attendance history yet.</td>
+              <td><strong>{{ date }}</strong></td>
+              <td>
+                {% if status == 'Present' %}
+                  <span class="badge badge-premium badge-premium-success">✅ Present</span>
+                {% elif status == 'Late' %}
+                  <span class="badge badge-premium badge-premium-warning">⚠️ Late</span>
+                {% elif status == 'Absent' %}
+                  <span class="badge badge-premium badge-premium-danger">❌ Absent</span>
+                {% elif status == 'Absent (3rd Late)' %}
+                  <span class="badge badge-premium badge-premium-danger">❌ Absent (3rd Late)</span>
+                {% else %}
+                  <span class="badge badge-premium badge-premium-info">{{ status }}</span>
+                {% endif %}
+              </td>
             </tr>
-          {% endif %}
-        </tbody>
-      </table>
-    </div>
+          {% endfor %}
+        {% else %}
+          <tr>
+            <td colspan="2" class="text-center text-muted py-4">No attendance history yet.</td>
+          </tr>
+        {% endif %}
+      </tbody>
+    </table>
   </div>
 </div>
+
 {% endblock %}

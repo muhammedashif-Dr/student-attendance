@@ -1,23 +1,23 @@
 {% extends 'layout.html' %}
-{% block content %}
-<div class="row justify-content-center">
-  <div class="col-md-6">
-    <div class="card shadow-sm">
-      <div class="card-body">
-        <h4 class="card-title mb-3">Sign in</h4>
-        <form method="post">
-          <div class="mb-3">
-            <label class="form-label">Username</label>
-            <input name="username" class="form-control" required>
-          </div>
-          <div class="mb-3">
-            <label class="form-label">Password</label>
-            <input name="password" type="password" class="form-control" required>
-          </div>
-          <button class="btn btn-primary">Sign In</button>
-        </form>
-      </div>
-    </div>
+{% block login_content %}
+<div class="login-card">
+  <div class="d-flex align-items-center gap-2 mb-4 justify-content-center">
+    <div class="logo-icon" style="width: 28px; height: 28px; font-size: 1.1rem; border-radius: 6px;">E</div>
+    <span style="font-weight: 700; font-size: 1.15rem; color: var(--text-main);">EduTrack Attendance</span>
   </div>
+  <h4 class="login-card-title" style="text-align: center;">Sign In</h4>
+  <p class="login-card-subtitle" style="text-align: center;">Access the attendance management system</p>
+  
+  <form method="post">
+    <div class="mb-3">
+      <label class="form-label" style="font-size: 0.8rem; font-weight: 600; color: var(--text-main);">Username</label>
+      <input name="username" class="form-control-premium" placeholder="Username / Student ID" required>
+    </div>
+    <div class="mb-4">
+      <label class="form-label" style="font-size: 0.8rem; font-weight: 600; color: var(--text-main);">Password</label>
+      <input name="password" type="password" class="form-control-premium" placeholder="Password" required>
+    </div>
+    <button type="submit" class="btn-premium-primary w-100" style="padding: 10px;">Sign In</button>
+  </form>
 </div>
 {% endblock %}

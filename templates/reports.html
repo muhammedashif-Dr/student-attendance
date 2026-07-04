@@ -1,43 +1,71 @@
 {% extends 'layout.html' %}
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-3">
-  <h3>Attendance Reports</h3>
-  <a class="btn btn-sm btn-outline-primary" href="{{ url_for('export_csv') }}">Export CSV</a>
+
+<div class="dashboard-header">
+  <div class="dashboard-title-area">
+    <h1>Attendance Reports</h1>
+  </div>
+  <a class="btn-premium-primary text-decoration-none" href="{{ url_for('export_csv') }}">
+    <i class="bi bi-file-earmark-arrow-down-fill"></i> Export CSV
+  </a>
 </div>
-<div class="table-responsive mt-3">
-  <table class="table table-sm table-bordered table-striped align-middle text-center mb-0">
-    <thead class="table-light">
-      <tr>
-        <th>Student ID</th>
-        <th>Name</th>
-        <th>Total Days</th>
-        <th>Present</th>
-        <th>Late</th>
-        <th>Absent</th>
-        <th>Effective Attended</th>
-        <th>Effective Absent</th>
-        <th>Attendance %</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for sid, name, total, present, late, absent, eff_present, eff_absent, percentage in rows %}
-        <tr class="{{ 'table-danger-light' if percentage < 75.0 and total > 0 else 'table-success-light' if total > 0 else '' }}">
-          <td><strong>{{ sid }}</strong></td>
-          <td class="text-start">{{ name }}</td>
-          <td>{{ total }}</td>
-          <td>{{ present }}</td>
-          <td><span class="badge status-late">{{ late }}</span></td>
-          <td>{{ absent }}</td>
-          <td><strong>{{ eff_present }}</strong></td>
-          <td><strong>{{ eff_absent }}</strong></td>
-          <td>
-            <span class="badge {{ 'bg-danger' if percentage < 75.0 else 'bg-success' }}">
-              {{ '%.2f'|format(percentage) }}%
-            </span>
-          </td>
+
+<div class="card-premium-action">
+  <h5>All Student Records Summary</h5>
+  <p class="text-muted mb-3" style="font-size: 0.85rem;">This report summarizes attendance records for all students, including overall percentages and late counters (3 lates equal 1 effective absence).</p>
+  
+  <div class="table-premium-container">
+    <table class="table-premium">
+      <thead>
+        <tr>
+          <th>Student ID</th>
+          <th>Name</th>
+          <th>Total Days</th>
+          <th>Present</th>
+          <th>Late</th>
+          <th>Absent</th>
+          <th>Effective Attended</th>
+          <th>Effective Absent</th>
+          <th>Attendance %</th>
         </tr>
-      {% endfor %}
-    </tbody>
-  </table>
+      </thead>
+      <tbody>
+        {% for sid, name, total, present, late, absent, eff_present, eff_absent, percentage in rows %}
+          <tr class="{% if percentage < 75.0 and total > 0 %}table-danger-light{% elif total > 0 %}table-success-light{% endif %}">
+            <td><strong>{{ sid }}</strong></td>
+            <td>{{ name }}</td>
+            <td>{{ total }}</td>
+            <td>{{ present }}</td>
+            <td>
+              <span class="badge badge-premium badge-premium-warning">{{ late }}</span>
+            </td>
+            <td>{{ absent }}</td>
+            <td><strong>{{ eff_present }}</strong></td>
+            <td><strong>{{ eff_absent }}</strong></td>
+            <td>
+              <span class="badge badge-premium {% if percentage < 75.0 %}badge-premium-danger{% else %}badge-premium-success{% endif %}">
+                {{ '%.1f'|format(percentage) }}%
+              </span>
+            </td>
+          </tr>
+        {% endfor %}
+        {% if not rows %}
+          <tr>
+            <td colspan="9" class="text-center text-muted py-4">No student records found to compile report.</td>
+          </tr>
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
 </div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+  // Highlight sidebar item active status
+  document.querySelectorAll('.sidebar-item').forEach(item => item.classList.remove('active'));
+  const activeNav = document.getElementById('nav-reports');
+  if (activeNav) activeNav.classList.add('active');
+});
+</script>
+
 {% endblock %}

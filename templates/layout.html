@@ -3,32 +3,87 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{{ title or 'Attendance' }}</title>
+    <title>{{ title or 'EduTrack Attendance' }}</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
   </head>
-  <body class="bg-light">
-    <nav class="navbar navbar-expand-lg navbar-light bg-white border-bottom">
-      <div class="container-fluid">
-        <a class="navbar-brand" href="#">Attendance</a>
-        <div class="d-flex">
-          {% if session.name %}
-            <span class="me-3">{{ session.name }}</span>
-            <a class="btn btn-outline-danger btn-sm" href="{{ url_for('logout') }}">Logout</a>
-          {% endif %}
+  <body>
+    {% if session.role %}
+      <div class="app-container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+          <div class="sidebar-top">
+            <a class="sidebar-logo" href="#">
+              <div class="logo-icon">E</div>
+              <div class="logo-text">
+                <span class="logo-title">EduTrack</span>
+                <span class="logo-subtitle">Attendance</span>
+              </div>
+            </a>
+            <ul class="sidebar-menu">
+              {% if session.role == 'admin' %}
+                <li class="sidebar-item" id="nav-dashboard">
+                  <a href="{{ url_for('admin_dashboard') }}?tab=dashboard"><i class="bi bi-grid-fill"></i> Dashboard</a>
+                </li>
+                <li class="sidebar-item" id="nav-attendance">
+                  <a href="{{ url_for('admin_dashboard') }}?tab=attendance"><i class="bi bi-check-circle-fill"></i> Attendance</a>
+                </li>
+                <li class="sidebar-item" id="nav-students">
+                  <a href="{{ url_for('admin_dashboard') }}?tab=students"><i class="bi bi-people-fill"></i> Students</a>
+                </li>
+                <li class="sidebar-item" id="nav-records">
+                  <a href="{{ url_for('admin_dashboard') }}?tab=records"><i class="bi bi-file-earmark-text-fill"></i> Records</a>
+                </li>
+                <li class="sidebar-item" id="nav-reports">
+                  <a href="{{ url_for('reports') }}"><i class="bi bi-bar-chart-line-fill"></i> Reports</a>
+                </li>
+                <li class="sidebar-item" id="nav-settings">
+                  <a href="{{ url_for('admin_dashboard') }}?tab=settings"><i class="bi bi-gear-fill"></i> Settings</a>
+                </li>
+              {% else %}
+                <li class="sidebar-item active">
+                  <a href="{{ url_for('student_dashboard') }}"><i class="bi bi-grid-fill"></i> Dashboard</a>
+                </li>
+              {% endif %}
+            </ul>
+          </div>
+          <div class="sidebar-bottom">
+            <ul class="sidebar-menu">
+              <li class="sidebar-item">
+                <a href="{{ url_for('logout') }}"><i class="bi bi-box-arrow-left"></i> Logout</a>
+              </li>
+            </ul>
+          </div>
+        </div>
+        <!-- Main Content -->
+        <div class="main-content-wrapper">
+          <div class="content-body">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+              {% if messages %}
+                {% for cat, msg in messages %}
+                  <div class="alert alert-premium alert-premium-{{ 'warning' if cat=='warning' else ('danger' if cat=='danger' else 'info') }}">{{ msg }}</div>
+                {% endfor %}
+              {% endif %}
+            {% endwith %}
+            {% block content %}{% endblock %}
+          </div>
         </div>
       </div>
-    </nav>
-    <div class="container py-4">
-      {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-          {% for cat, msg in messages %}
-            <div class="alert alert-{{ 'warning' if cat=='warning' else ('danger' if cat=='danger' else 'info') }}">{{ msg }}</div>
-          {% endfor %}
-        {% endif %}
-      {% endwith %}
-      {% block content %}{% endblock %}
-    </div>
+    {% else %}
+      <div class="login-wrapper">
+        <div class="content-body-login">
+          {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+              {% for cat, msg in messages %}
+                <div class="alert alert-premium alert-premium-{{ 'warning' if cat=='warning' else ('danger' if cat=='danger' else 'info') }}" style="max-width: 400px; margin: 0 auto 16px auto;">{{ msg }}</div>
+              {% endfor %}
+            {% endif %}
+          {% endwith %}
+          {% block login_content %}{% endblock %}
+        </div>
+      </div>
+    {% endif %}
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   </body>
 </html>
